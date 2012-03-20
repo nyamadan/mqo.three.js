@@ -2,6 +2,11 @@ mqo.three.js
 ============
 mqo.three.js is a mqo parser for three.js.
 
+Demo
+----
+* [demo1](http://www18.ocn.ne.jp/~nyamadan/dev/webgl/mqo/demo1.html)
+* [demo2](http://www18.ocn.ne.jp/~nyamadan/dev/webgl/mqo/demo2.html)
+
 Usage
 -----
     <!doctype html>
