@@ -1,0 +1,19 @@
+mqo.three.jsはMetasequoiaで作成したmqoファイルをパースしてTHREE.Meshに変換するライブラリです。
+phi氏のmqo.gl.enchant.jsをベースに作成しました。
+
+<オリジナルモジュール>
+mqo.gl.enchant.js
+  http://tmlife.net/programming/javascript/gl-enchant-js-mqo-revise.html
+
+<依存モジュール>
+Three.js
+  http://github.com/mrdoob/three.js
+
+<連絡先とか>
+Yoshiki Yamada <nyamadandan@gmail.com>
+  Web : http://sites.google.com/site/nyamadandan
+  Blog : http://nyamadandan.blogspot.com
+  Twitter : http://twitter.com/nyamadandan
+
+Copyright (C) 2012 Yoshiki Yamada. All Rights Reserved.
+
