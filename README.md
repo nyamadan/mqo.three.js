@@ -1,6 +1,6 @@
 mqo.three.js
 ============
-mqo.three.js is a mqo parser for three.js.
+mqo.three.js is a mqo importer for three.js.
 
 Demo
 ----
