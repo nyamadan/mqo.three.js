@@ -59,11 +59,12 @@
     }
 
     // 頂点リスト
+    var scaling = 0.01
     for(var i = 0; i < mqoMesh.vertices.length; ++i) {
       geometry.vertices.push(new THREE.Vertex(new THREE.Vector3(
-        mqoMesh.vertices[i][0],
-        mqoMesh.vertices[i][1],
-        mqoMesh.vertices[i][2]
+        mqoMesh.vertices[i][0] * scaling,
+        mqoMesh.vertices[i][1] * scaling,
+        mqoMesh.vertices[i][2] * scaling
       )));
     }
 

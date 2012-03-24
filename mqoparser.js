@@ -85,12 +85,11 @@
 
   MqoMesh.prototype._parseVertices = function(num, text) {
     var vertexTextList = text.split('\n');
-    var scaling = 0.01;
     for (var i = 1; i <= num; ++i) {
       var vertex = vertexTextList[i].split(' ');
-      vertex[0] = Number(vertex[0]) * scaling;
-      vertex[1] = Number(vertex[1]) * scaling;
-      vertex[2] = Number(vertex[2]) * scaling;
+      vertex[0] = Number(vertex[0]);
+      vertex[1] = Number(vertex[1]);
+      vertex[2] = Number(vertex[2]);
       this.vertices.push(vertex);
     }
 
