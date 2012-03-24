@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <script src="js/Three.js"></script>
-    <script src="mqo.three.js"></script>
+    <script src="../mqoparser.js"></script>
+    <script src="../mqoconverter.js"></script>
     <style>
       body {
         margin: 0px;
@@ -13,17 +14,15 @@
     </style>
     <script>
       window.addEventListener('load', function() {
-        var camera, scene, renderer, trackball, meshes;
+        var camera, scene, renderer, trackball, mesh;
 
-        MqoLoader.load({
-          url : 'assets/geometry.mqo'
-          , MaterialConstructor : THREE.MeshPhongMaterial
-          , texturePath : 'assets'
-          , callback : function(out) {
-              meshes = out;
-              init();
-              animate();
-          }
+        MqoLoader.load('asset/geometry.mqo', function(mqo){
+          mesh = MqoLoader.toTHREEJS(mqo, {
+            texturePath : 'asset'
+          });
+
+          init();
+          animate();
         });
 
         var init = function() {
@@ -42,9 +41,7 @@
           axis.scale.z = 0.01;
           scene.add(axis);
 
-          for(var i = 0; i < meshes.length; ++i) {
-            scene.add( meshes[i] );
-          }
+          scene.add(mesh);
 
           renderer = new THREE.WebGLRenderer();
           renderer.setSize( window.innerWidth, window.innerHeight );
