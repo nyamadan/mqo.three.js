@@ -14,20 +14,19 @@ Usage
       <head>
         <meta charset="UTF-8" />
         <script src="js/Three.js"></script>
-        <script src="mqo.three.js"></script>
+        <script src="mqoparser.js"></script>
+        <script src="mqoconverter.js"></script>
         <script>
           window.addEventListener('load', function() {
-            var camera, scene, renderer, meshes;
+            var camera, scene, renderer, mesh;
 
-            MqoLoader.load({
-              url : 'assets/miku01.mqo'
-              , MaterialConstructor : THREE.MeshPhongMaterial
-              , texturePath : 'assets'
-              , callback : function(out) {
-                  meshes = out;
-                  init();
-                  animate();
-              }
+            MqoLoader.load('asset/miku01.mqo', function(mqo) {
+              mesh = MqoLoader.toTHREEJS(mqo, {
+                texturePath : 'asset'
+                , MaterialConstructor : THREE.MeshPhongMaterial
+              });
+              init();
+              animate();
             });
 
             var init = function() {
@@ -40,9 +39,7 @@ Usage
               scene.add( new THREE.DirectionalLight(0x7f7f7f));
               scene.add( new THREE.AmbientLight(0xc0c0c0));
 
-              for(var i = 0; i < meshes.length; ++i) {
-                scene.add( meshes[i] );
-              }
+              scene.add( mesh );
 
               renderer = new THREE.WebGLRenderer();
               renderer.setSize( window.innerWidth, window.innerHeight );
@@ -55,9 +52,7 @@ Usage
             }
 
             var render = function () {
-              for(var i = 0; i < meshes.length; ++i) {
-                  meshes[i].rotation.y += 0.01;
-              }
+              mesh.rotation.y += 0.01;
               renderer.render( scene, camera );
             }
           }, false);
@@ -65,4 +60,3 @@ Usage
         </script>
       </head>
     </html>
-

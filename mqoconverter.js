@@ -140,6 +140,8 @@
       }
     }
 
+    geometry.computeCentroids();
+
     return new THREE.Mesh(geometry, new THREE.MeshFaceMaterial());
   };
 })(this);
