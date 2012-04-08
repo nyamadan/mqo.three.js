@@ -10,11 +10,19 @@
     var texturePath = options.texturePath || '.';
     var MaterialConstructor = options.MaterialConstructor || THREE.MeshPhongMaterial;
 
-    var rootObj = new THREE.Object3D();
+    //親オブジェクトを格納する
+    var parentObjects = [];
+    parentObjects[0] = new THREE.Object3D
+
     for (var i = 0, len = mqo.meshes.length; i < len; ++i) {
-      rootObj.add(convertMesh(mqo.meshes[i], mqo.material, texturePath, MaterialConstructor));
+      var mqoMesh = mqo.meshes[i];
+      var object = convertMesh(mqoMesh, mqo.material, texturePath, MaterialConstructor);
+      //親オブジェクトにオブジェクトを登録する
+      parentObjects[mqoMesh.depth].add(object);
+      //子オブジェクト保存しておく
+      parentObjects[mqoMesh.depth + 1] = object;
     }
-    return rootObj;
+    return parentObjects[0];
   }
 
   var convertMesh = function(mqoMesh, mqoMaterials, texturePath, MaterialConstructor) {

@@ -51,19 +51,29 @@
    * メタセコメッシュ
    */
   var MqoMesh = function() {
+    this.name = '';       //名前
     this.vertices = [];   // 頂点
     this.faces = [];   // 面情報
     this.vertNorms = [];   // 頂点法線
 
     this.facet = 59.5;     // スムージング角度
+    this.depth = 0;        // 階層の深さ
     this.mirror = 0;
     this.mirrorAxis = 0;
   };
 
   MqoMesh.prototype.parse = function(text) {
+    // 名前
+    var name = text.match(/^Object[\s\S]+\"([^\"]+)?\"/);
+    if (name) { this.name = name[1]; }
+
     // スムージング角
     var facet = text.match(/facet ([0-9\.]+)/);
     if (facet) { this.facet = Number(facet[1]); }
+
+    //階層の深さ
+    var depth = text.match(/depth ([0-9\.]+)/);
+    if (depth) { this.depth = Number(depth[1]); }
 
     // ミラー
     var mirror = text.match(/mirror ([0-9])/m);
