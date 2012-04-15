@@ -10,13 +10,36 @@
     var texturePath = options.texturePath || '.';
     var MaterialConstructor = options.MaterialConstructor || THREE.MeshPhongMaterial;
 
+    var skins = options.skins || null;
+
     //親オブジェクトを格納する
     var parentObjects = [];
     parentObjects[0] = new THREE.Object3D
 
     for (var i = 0, len = mqo.meshes.length; i < len; ++i) {
+      var object, material;
+
       var mqoMesh = mqo.meshes[i];
-      var object = convertMesh(mqoMesh, mqo.material, texturePath, MaterialConstructor);
+      var geometry = generateGeometry(mqoMesh, mqo.material, texturePath, MaterialConstructor);
+
+      if(skins) {
+        var skin = skins[i];
+        geometry.skinIndices = skin.indices;
+        geometry.skinWeights = skin.weights;
+        geometry.bones = skin.bones
+
+        for(var j = 0; j < geometry.materials.length; ++j) {
+          var gmaterial = geometry.materials[j];
+          gmaterial.skinning = true;
+        }
+
+        material = new THREE.MeshFaceMaterial();
+        object = new THREE.SkinnedMesh(geometry, material);
+      } else {
+        material = new THREE.MeshFaceMaterial();
+        object = new THREE.Mesh(geometry, material);
+      }
+
       //親オブジェクトにオブジェクトを登録する
       parentObjects[mqoMesh.depth].add(object);
       //子オブジェクト保存しておく
@@ -25,13 +48,16 @@
     return parentObjects[0];
   }
 
-  var convertMesh = function(mqoMesh, mqoMaterials, texturePath, MaterialConstructor) {
+  var generateGeometry = function(mqoMesh, mqoMaterials, texturePath, MaterialConstructor) {
     var geometry = new THREE.Geometry();
+
+    geometry.name = mqoMesh.name
 
     // マテリアルリスト
     for(var i = 0; i < mqoMaterials.materialList.length; ++i) {
       var mqoMaterial = mqoMaterials.materialList[i];
       var material = new MaterialConstructor();
+
       if(material.color) {
         material.color.setRGB(
           mqoMaterial.col[0] * mqoMaterial.dif,
@@ -151,6 +177,6 @@
 
     geometry.computeCentroids();
 
-    return new THREE.Mesh(geometry, new THREE.MeshFaceMaterial());
+    return geometry;
   };
 })(this);
