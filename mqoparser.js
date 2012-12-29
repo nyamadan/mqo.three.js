@@ -170,8 +170,12 @@
       // マテリアル デフォルト値
       if (!face.m) face.m = [undefined];
 
-      // 法線
-      face.n = calcNormalize(this.vertices[face.v[0]], this.vertices[face.v[1]], this.vertices[face.v[2]]);
+      // 法線計算
+      if(face.v.length === 3) {
+        face.n = calcNormalize(this.vertices[face.v[0]], this.vertices[face.v[1]], this.vertices[face.v[2]]);
+      } else {
+        face.n = [0, 0, 0];
+      }
 
       this.faces.push(face);
     }
@@ -188,15 +192,26 @@
           v: [],
           vNum: targetFace.vNum
         };
-        for (var j = 0; j < targetFace.v.length; ++j) { face.v[j] = targetFace.v[j] + vertexOffset; }
-        for (var j = 0; j < targetFace.uv.length; ++j) { face.uv[j] = targetFace.uv[j]; }
+        for (var j = 0; j < targetFace.v.length; ++j) {
+          face.v[j] = targetFace.v[j] + vertexOffset;
+        }
+        for (var j = 0; j < targetFace.uv.length; ++j) {
+          face.uv[j] = targetFace.uv[j];
+        }
 
-        if (face.vNum == 3) {
+        if (face.vNum === 3) {
           swap.call(face.v, 1, 2);
+          swap.call(face.uv, 2, 4);
+          swap.call(face.uv, 3, 5);
         }
         else {
           swap.call(face.v, 0, 1);
+          swap.call(face.uv, 0, 2);
+          swap.call(face.uv, 1, 3);
+
           swap.call(face.v, 2, 3);
+          swap.call(face.uv, 4, 6);
+          swap.call(face.uv, 5, 7);
         }
 
         face.n = targetFace.n;

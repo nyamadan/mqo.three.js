@@ -33,10 +33,16 @@
           gmaterial.skinning = true;
         }
 
-        material = new THREE.MeshFaceMaterial();
+        geometry.computeFaceNormals()
+        geometry.computeVertexNormals()
+
+        material = new THREE.MeshFaceMaterial(geometry.materials);
         object = new THREE.SkinnedMesh(geometry, material);
       } else {
-        material = new THREE.MeshFaceMaterial();
+        geometry.computeFaceNormals()
+        geometry.computeVertexNormals()
+
+        material = new THREE.MeshFaceMaterial(geometry.materials);
         object = new THREE.Mesh(geometry, material);
       }
 
@@ -54,6 +60,9 @@
     geometry.name = mqoMesh.name
 
     // マテリアルリスト
+    if( geometry.materials == undefined) {
+      geometry.materials = []
+    }
     for(var i = 0; i < mqoMaterials.materialList.length; ++i) {
       var mqoMaterial = mqoMaterials.materialList[i];
       var material = new MaterialConstructor();
@@ -139,9 +148,9 @@
 
         // UV
         geometry.faceVertexUvs[0].push([
-          new THREE.UV(face.uv[4], face.uv[5]),
-          new THREE.UV(face.uv[2], face.uv[3]),
-          new THREE.UV(face.uv[0], face.uv[1])
+          new THREE.UV(face.uv[4], 1.0 - face.uv[5]),
+          new THREE.UV(face.uv[2], 1.0 - face.uv[3]),
+          new THREE.UV(face.uv[0], 1.0 - face.uv[1])
         ]);
       }
       else if (face.vNum == 4) {
@@ -167,10 +176,10 @@
 
         // UV
         geometry.faceVertexUvs[0].push([
-          new THREE.UV(face.uv[6], face.uv[7]),
-          new THREE.UV(face.uv[4], face.uv[5]),
-          new THREE.UV(face.uv[2], face.uv[3]),
-          new THREE.UV(face.uv[0], face.uv[1]),
+          new THREE.UV(face.uv[6], 1.0 - face.uv[7]),
+          new THREE.UV(face.uv[4], 1.0 - face.uv[5]),
+          new THREE.UV(face.uv[2], 1.0 - face.uv[3]),
+          new THREE.UV(face.uv[0], 1.0 - face.uv[1]),
         ]);
       }
     }
