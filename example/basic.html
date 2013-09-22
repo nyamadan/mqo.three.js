@@ -3,7 +3,6 @@
   <head>
     <meta charset="UTF-8" />
     <script src="js/Three.js"></script>
-    <script src="js/TrackballControls.js"></script>
     <script src="../mqoparser.js"></script>
     <script src="../mqoconverter.js"></script>
     <style>
@@ -15,10 +14,10 @@
     </style>
     <script>
       window.addEventListener('load', function() {
-        var camera, scene, renderer, trackball, mesh;
+        var camera, scene, renderer, mesh;
 
-        MqoLoader.load('asset/geometry.mqo', function(mqo){
-          mesh = MqoLoader.toTHREEJS(mqo, {
+        MqoParser.load('asset/geometry.mqo', function(mqo){
+          mesh = MqoConverter.toTHREEJS(mqo, {
             texturePath : 'asset'
           });
 
@@ -30,7 +29,7 @@
           scene = new THREE.Scene();
 
           camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 100 );
-          camera.position.z = 5;
+          camera.position.z = 2;
           scene.add( camera );
 
           scene.add( new THREE.DirectionalLight(0x7f7f7f));
@@ -47,14 +46,14 @@
           renderer = new THREE.WebGLRenderer();
           renderer.setSize( window.innerWidth, window.innerHeight );
 
-          trackball = new THREE.TrackballControls(camera, renderer.domElement);
-
           document.body.appendChild( renderer.domElement );
         }
 
         var animate = function() {
-          trackball.update()
-
+          if(mesh != null) {
+            mesh.rotation.x += 0.005;
+            mesh.rotation.y += 0.02;
+          }
           requestAnimationFrame(animate);
           render();
         }
