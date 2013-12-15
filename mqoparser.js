@@ -5,28 +5,27 @@ MqoParser.load = function(url, callback) {
   var req = new XMLHttpRequest();
   req.open('GET', url, true);
   req.onload = function() {
-    var mqoModel = MqoParser.parse(req.responseText);
+    var mqo = MqoParser.parse(req.responseText);
     if(callback) {
-      callback(mqoModel);
+      callback(mqo);
     }
   };
   req.send(null);
 };
 
 MqoParser.parse = function(text) {
-  var mqoModel = new MqoModel();
-  mqoModel.parse(text);
-  return mqoModel;
+  var mqo = new Mqo();
+  mqo.parse(text);
+  return mqo;
 }
 
-var MqoModel = function()
+var Mqo = function()
 {
-  this.meshes = Array();
-  this.material = null;
-  this.texturePath = null;
+  this.meshes = [];
+  this.materials = [];
 };
 
-MqoModel.prototype.parse = function(text) {
+Mqo.prototype.parse = function(text) {
   // オブジェクトをパース
   var objectTextList = text.match(/^Object [\s\S]*?^\}/gm);
 
@@ -39,10 +38,8 @@ MqoModel.prototype.parse = function(text) {
 
   // マテリアル
   var materialText = text.match(/^Material [\s\S]*?^\}/m);
-
-  this.material = new MqoMaterial();
   if (materialText) {
-    this.material.parse(materialText[0]);
+    this.materials = this._parseMaterials(materialText[0]);
   }
 }
 
@@ -135,6 +132,11 @@ MqoMesh.prototype._parseFaces = function(num, text) {
       v1[0] * v2[1] - v1[1] * v2[0]
     ];
     var len = Math.sqrt(v3[0] * v3[0] + v3[1] * v3[1] + v3[2] * v3[2]);
+
+    if(len === 0) {
+      return [0, 0, 0];
+    }
+
     v3[0] /= len;
     v3[1] /= len;
     v3[2] /= len;
@@ -172,6 +174,15 @@ MqoMesh.prototype._parseFaces = function(num, text) {
     // 法線計算
     if(face.v.length === 3) {
       face.n = calcNormalize(this.vertices[face.v[0]], this.vertices[face.v[1]], this.vertices[face.v[2]]);
+
+    } else if(face.v.length === 4) {
+      var n1 = calcNormalize(this.vertices[face.v[0]], this.vertices[face.v[1]], this.vertices[face.v[2]]);
+      var n2 = calcNormalize(this.vertices[face.v[2]], this.vertices[face.v[3]], this.vertices[face.v[0]]);
+      face.n = [
+        (n1[0] + n2[0]) * 0.5,
+        (n1[1] + n2[1]) * 0.5,
+        (n1[2] + n2[2]) * 0.5
+      ]
     } else {
       face.n = [0, 0, 0];
     }
@@ -202,8 +213,7 @@ MqoMesh.prototype._parseFaces = function(num, text) {
         swap.call(face.v, 1, 2);
         swap.call(face.uv, 2, 4);
         swap.call(face.uv, 3, 5);
-      }
-      else {
+      } else if (face.vNum === 4) {
         swap.call(face.v, 0, 1);
         swap.call(face.uv, 0, 2);
         swap.call(face.uv, 1, 3);
@@ -230,19 +240,20 @@ MqoMesh.prototype._parseFaces = function(num, text) {
 
     for (var j = 0; j < face.vNum; ++j) {
       var index = vIndices[j];
-      vertNorm[index].push.apply(vertNorm[index], face.n);
+      vertNorm[index].push(face.n);
     }
   }
 
   for (var i = 0; i < vertNorm.length; ++i) {
     var vn = vertNorm[i];
     var result = [0, 0, 0];
-    var len = vn.length / 3;0
+    var len = vn.length;
     for (var j = 0; j < len; ++j) {
-      result[0] += vn[j * 3 + 0];
-      result[1] += vn[j * 3 + 1];
-      result[2] += vn[j * 3 + 2];
+      result[0] += vn[j][0];
+      result[1] += vn[j][1];
+      result[2] += vn[j][2];
     }
+
 
     result[0] /= len;
     result[1] /= len;
@@ -260,18 +271,11 @@ MqoMesh.prototype._parseFaces = function(num, text) {
 /**
 * メタセコ用マテリアル
 */
-var MqoMaterial = function() {
-  this.materialList = [];
-
-  // デフォルト
-  this.materialList[undefined] = {
-    col: [1, 1, 1, 1]
-  };
-};
-
-MqoMaterial.prototype.parse = function(text) {
+Mqo.prototype._parseMaterials = function(text) {
   var infoText = text.match(/^Material [0-9]* \{\r\n([\s\S]*?)\n^\}$/m);
   var matTextList = infoText[1].split('\n');
+
+  var materials = [];
 
   for (var i = 0, len = matTextList.length; i < len; ++i) {
     var mat = {};
@@ -295,8 +299,10 @@ MqoMaterial.prototype.parse = function(text) {
       }
       mat[key] = value;
     }
-    this.materialList.push(mat);
+    materials.push(mat);
   }
+
+  return materials;
 }
 
 if (typeof exports !== 'undefined') {

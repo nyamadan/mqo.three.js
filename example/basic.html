@@ -17,10 +17,9 @@
         var camera, scene, renderer, mesh;
 
         MqoParser.load('asset/geometry.mqo', function(mqo){
-          mesh = MqoConverter.toTHREEJS(mqo, {
-            texturePath : 'asset'
-          });
-
+          var geometry = MqoConverter.toTHREEJS_Geometry(mqo, {scale : 0.005});
+          var materials = MqoConverter.generateMaterials(mqo.materials, 'asset');
+          mesh = new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(materials));
           init();
           animate();
         });

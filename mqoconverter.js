@@ -1,106 +1,63 @@
 var MqoConverter = {};
 
+/**
+ *
+ * @param mqo
+ * @param options
+ * @returns {Geometry}
+ */
 MqoConverter.toTHREEJS_Geometry = function(mqo, options) {
   if(!options) {
     options = {};
   }
 
   var texturePath = options.texturePath || '.';
-  var MaterialConstructor = options.MaterialConstructor || THREE.MeshPhongMaterial;
+  var scale = options.scale || 0.01;
 
-  //親オブジェクトを格納する
-  var geometries = [];
+  var geometry = new THREE.Geometry()
+  mqo.meshes.forEach(function(mqoMesh) {
+    THREE.GeometryUtils.merge(geometry, MqoConverter.generateGeometry(mqoMesh, scale))
+  })
 
-  //mqoを保存
-  geometries.parent_mqo = mqo;
+  geometry.computeCentroids();
+  geometry.computeBoundingBox();
+  geometry.computeFaceNormals();
+  geometry.computeVertexNormals();
 
-  for (var i = 0, len = mqo.meshes.length; i < len; ++i) {
-    var object, material;
-    var mqoMesh = mqo.meshes[i];
-    var geometry = generateGeometry(mqoMesh, mqo.material, texturePath, MaterialConstructor);
-
-    geometry.computeBoundingBox();
-    geometry.computeFaceNormals();
-    geometry.computeVertexNormals();
-
-    geometries[i] = geometry;
-  }
-  return geometries;
+  return geometry;
 }
 
-MqoConverter.toTHREEJS_Mesh = function(geometries, options) {
-  if(!options) {
-    options = {};
-  }
-
-  var skins = options.skins || null;
-  var rootObject = options.rootObject || new THREE.Object3D 
-
-  var mqo = geometries.parent_mqo;
-
-  //親オブジェクトを格納する
-  var parentObjects = [];
-  parentObjects[0] = rootObject
-
-
-  for (var i = 0, len = geometries.length; i < len; ++i) {
-    var geometry = geometries[i]
-    var mqoMesh = mqo.meshes[i];
-
-    var material
-    var object
-
-    if(skins) {
-      var skin = skins[i];
-      geometry.skinIndices = skin.indices;
-      geometry.skinWeights = skin.weights;
-      geometry.bones = skin.bones
-
-      for(var j = 0; j < geometry.materials.length; ++j) {
-        var gmaterial = geometry.materials[j];
-        gmaterial.skinning = true;
-      }
-    }
-
-    material = new THREE.MeshFaceMaterial(geometry.materials);
-    object = new THREE.Mesh(geometry, material);
-
-    //親オブジェクトにオブジェクトを登録する
-    parentObjects[mqoMesh.depth].add(object);
-    //子オブジェクト保存しておく
-    parentObjects[mqoMesh.depth + 1] = object;
-  }
-  return parentObjects[0];
-}
-
-MqoConverter.toTHREEJS = function(mqo, options) {
-  if(!options) {
-    options = {};
-  }
-
-  var geometries = MqoConverter.toTHREEJS_Geometry(mqo, options)
-  return MqoConverter.toTHREEJS_Mesh(geometries, options)
-}
-
-var generateGeometry = function(mqoMesh, mqoMaterials, texturePath, MaterialConstructor) {
-  var geometry = new THREE.Geometry();
-
-  geometry.name = mqoMesh.name
-
+/**
+ *
+ * @param mqoMaterials
+ * @param texturePath
+ * @returns {Array|*|dojo|NodeList}
+ */
+MqoConverter.generateMaterials = function(mqoMaterials, texturePath) {
   // マテリアルリスト
-  if( geometry.materials == undefined) {
-    geometry.materials = []
-  }
-  for(var i = 0; i < mqoMaterials.materialList.length; ++i) {
-    var mqoMaterial = mqoMaterials.materialList[i];
-    var material = new MaterialConstructor();
-    material.transparent = true;
+  return mqoMaterials.map(function(mqoMaterial) {
+    var material = null;
+    if(mqoMaterial.shader == 2) {
+      material = new THREE.MeshLambertMaterial();
+    } else if(mqoMaterial.shader == 3) {
+      material = new THREE.MeshPhongMaterial();
+    } else  {
+      material = new THREE.MeshBasicMaterial();
+    }
 
     if(material.color) {
       material.color.setRGB(
         mqoMaterial.col[0] * mqoMaterial.dif,
         mqoMaterial.col[1] * mqoMaterial.dif,
         mqoMaterial.col[2] * mqoMaterial.dif
+      );
+    }
+
+    if(material.emissive) {
+      material.emissive.setRGB(
+        mqoMaterial.col[0] * mqoMaterial.emi,
+        mqoMaterial.col[1] * mqoMaterial.emi,
+        mqoMaterial.col[2] * mqoMaterial.emi
       );
     }
 
@@ -124,19 +81,27 @@ var generateGeometry = function(mqoMesh, mqoMaterials, texturePath, MaterialCons
        material.map = THREE.ImageUtils.loadTexture(texturePath + '/' + mqoMaterial.tex);
     }
 
+    material.transparent = true;
     material.shiness = mqoMaterial.power;
     material.opacity = mqoMaterial.col[3]
 
-    geometry.materials.push(material);
-  }
+    return material;
+  });
+}
 
-  // 頂点リスト
-  var scaling = 0.005
+/**
+ *
+ * @param mqoMesh
+ * @param scale
+ * @returns {Geometry}
+ */
+MqoConverter.generateGeometry = function(mqoMesh, scale) {
+  var geometry = new THREE.Geometry();
   for(var i = 0; i < mqoMesh.vertices.length; ++i) {
     geometry.vertices.push(new THREE.Vector3(
-      mqoMesh.vertices[i][0] * scaling,
-      mqoMesh.vertices[i][1] * scaling,
-      mqoMesh.vertices[i][2] * scaling
+      mqoMesh.vertices[i][0] * scale,
+      mqoMesh.vertices[i][1] * scale,
+      mqoMesh.vertices[i][2] * scale
     ));
   }
 
@@ -229,9 +194,50 @@ var generateGeometry = function(mqoMesh, mqoMaterials, texturePath, MaterialCons
     }
   }
 
-  geometry.computeCentroids();
-
   return geometry;
+};
+
+/**
+ * 圧縮されたOBJECTを返す
+ * @param mqo
+ * @param scale
+ * @returns {{materials: (THREE.JSONLoader.parse.materials|*|materials|Array|.materials.materials|THREE.MeshFaceMaterial.materials), vertices: (Array|*), faces: (Array|*), uv: (Array|*|dojo|NodeList)}}
+ */
+MqoConverter.toCompressedObject = function (mqo, scale) {
+  var geometry = new THREE.Geometry();
+  mqo.meshes.forEach(function (mqoMesh) {
+    THREE.GeometryUtils.merge(geometry, MqoConverter.generateGeometry(mqoMesh, scale))
+    return
+  });
+
+  return {
+    materials: mqo.materials,
+    vertices: geometry.vertices.map(function (v) {
+      return {
+        p: [ v.x, v.y, v.z],
+        i: [0, 0, 0, 0],
+        w: [1, 0, 0, 0]
+      }
+    }),
+
+    faces: geometry.faces.map(function (face) {
+      return {
+        a: face.a,
+        b: face.b,
+        c: face.c,
+        m: face.materialIndex,
+        n: [ face.normal.x, face.normal.y, face.normal.z]
+      }
+    }),
+
+    uv: geometry.faceVertexUvs[0].map(function (uv) {
+      return [
+        [uv[0].x, uv[0].y],
+        [uv[1].x, uv[1].y],
+        [uv[2].x, uv[2].y]
+      ]
+    })
+  }
 };
 
 if (typeof exports !== 'undefined') {
